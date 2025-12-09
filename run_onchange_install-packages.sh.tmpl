@@ -43,4 +43,7 @@ sudo zypper install -y metatheme-arc-common gtk3-metatheme-arc gtk2-metatheme-ar
 # Włączamy usługę autorandr, aby wykrywała podłączenie monitora (hotplug)
 sudo systemctl enable --now autorandr.service
 
+# Włączamy usługę Bluetooth
+sudo systemctl enable --now bluetooth
+
 echo "Instalacja pakietów zakończona pomyślnie."

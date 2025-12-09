@@ -32,6 +32,8 @@ exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 exec --no-startup-id dunst
 # xss-lock nasłuchuje sygnałów systemd (np. suspend/lid close) i uruchamia nasz skrypt
 exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/.local/bin/lock.sh
+# Bluetooth Applet (Tray icon)
+exec --no-startup-id blueman-applet
 
 # --- Klawiatura i Układ ---
 # Dla VM używamy domyślnego.
