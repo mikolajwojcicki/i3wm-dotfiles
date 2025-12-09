@@ -1,0 +1,89 @@
+# --- Zmienne ---
+set $mod Mod4
+set $term kitty
+set $refresh_i3status killall -SIGUSR1 i3status
+
+# --- Wygląd (Gaps & Borders) ---
+# Usuwamy paski tytułowe okien (styl KDE/Modern)
+default_border pixel 2
+default_floating_border pixel 2
+
+# Odstępy między oknami (i3-gaps functionality)
+gaps inner 10
+gaps outer 5
+
+# --- Czcionki ---
+font pango:JetBrains Mono 10
+
+# --- Autostart (Kluczowe usługi) ---
+# Kompozytor (cienie, przezroczystość)
+exec_always --no-startup-id picom -b
+# Tapeta (na razie szare tło, później ustawimy obrazek)
+exec_always --no-startup-id feh --bg-scale /usr/share/wallpapers/openSUSEdefault/contents/images/1920x1080.jpg
+# Aplet sieci
+exec --no-startup-id nm-applet
+# Zarządzanie energią
+exec --no-startup-id tlp start
+# Polkit (do autoryzacji sudo w GUI)
+exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+
+# --- Klawiatura i Układ ---
+# Dla VM używamy domyślnego.
+# NA LAPTOPIE: Odkomentuj właściwy układ (Nordic)
+# exec_always --no-startup-id setxkbmap no  # Norwegia
+# exec_always --no-startup-id setxkbmap se  # Szwecja
+# exec_always --no-startup-id setxkbmap dk  # Dania
+# exec_always --no-startup-id setxkbmap fi  # Finlandia
+
+# --- Skróty Klawiszowe ---
+
+# Uruchamianie terminala
+bindsym $mod+Return exec $term
+
+# Zamknięcie okna (jak Alt+F4)
+bindsym $mod+q kill
+
+# Menu aplikacji (Rofi zamiast dmenu)
+bindsym $mod+d exec "rofi -show drun -show-icons"
+
+# Przełączanie okien (vim style)
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+# Przesuwanie okien
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+# Pełny ekran
+bindsym $mod+f fullscreen toggle
+
+# Układy (tiling/floating)
+bindsym $mod+e layout toggle split
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+# --- ThinkPad T14 Gen 2 Special Keys ---
+# Audio (wymaga zainstalowanego pavucontrol/pulseaudio-utils)
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5% && $refresh_i3status
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5% && $refresh_i3status
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
+
+# Jasność ekranu (wymaga brightnessctl)
+bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl set +5%
+bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
+
+# --- System ---
+bindsym $mod+Shift+c reload
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Wyjść z i3?' -B 'Tak' 'i3-msg exit'"
+
+# --- Pasek (Tymczasowy - w Kroku 3 zastąpimy go Polybar) ---
+bar {
+        status_command i3status
+        position top
+}
