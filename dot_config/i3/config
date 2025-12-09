@@ -26,6 +26,8 @@ exec --no-startup-id nm-applet
 exec --no-startup-id tlp start
 # Polkit (do autoryzacji sudo w GUI)
 exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+# --- Polybar ---
+exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 
 # --- Klawiatura i Układ ---
 # Dla VM używamy domyślnego.
@@ -81,9 +83,3 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Wyjść z i3?' -B 'Tak' 'i3-msg exit'"
-
-# --- Pasek (Tymczasowy - w Kroku 3 zastąpimy go Polybar) ---
-bar {
-        status_command i3status
-        position top
-}
