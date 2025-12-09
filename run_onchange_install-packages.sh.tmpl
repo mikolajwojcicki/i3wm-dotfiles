@@ -5,7 +5,9 @@
 
 echo "Rozpoczynam instalację i naprawę zależności..."
 
-sudo zypper refresh
+sudo zypper addrepo -C -f -n "X11:Utilities" https://download.opensuse.org/repositories/X11:Utilities/openSUSE_Tumbleweed/X11:Utilities.repo
+
+sudo zypper --gpg-auto-import-keys refresh
 
 # --- FIX 1: Konflikt Power Management ---
 # Jeśli tuned jest zainstalowany, usuwamy go, aby zrobić miejsce dla tlp (lepsze dla ThinkPada)
@@ -30,5 +32,8 @@ sudo zypper install -y fontawesome-fonts jetbrains-mono-fonts papirus-icon-theme
 
 # 5. Specyficzne dla ThinkPada i openSUSE
 sudo zypper install -y tlp intel-media-driver
+
+# Dodajemy: i3lock (blokada), xss-lock (automat przy uśpieniu), scrot (screenshoty), imagemagick (rozmywanie tła)
+sudo zypper install -y i3lock xss-lock scrot ImageMagick
 
 echo "Instalacja pakietów zakończona pomyślnie."

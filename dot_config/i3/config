@@ -28,6 +28,10 @@ exec --no-startup-id tlp start
 exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 # --- Polybar ---
 exec_always --no-startup-id $HOME/.config/polybar/launch.sh
+# Dunst
+exec --no-startup-id dunst
+# xss-lock nasłuchuje sygnałów systemd (np. suspend/lid close) i uruchamia nasz skrypt
+exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/.local/bin/lock.sh
 
 # --- Klawiatura i Układ ---
 # Dla VM używamy domyślnego.
@@ -67,6 +71,9 @@ bindsym $mod+f fullscreen toggle
 bindsym $mod+e layout toggle split
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
+
+# Blokowanie ekranu (Win + L)
+bindsym $mod+Escape exec ~/.local/bin/lock.sh
 
 # --- ThinkPad T14 Gen 2 Special Keys ---
 # Audio (wymaga zainstalowanego pavucontrol/pulseaudio-utils)

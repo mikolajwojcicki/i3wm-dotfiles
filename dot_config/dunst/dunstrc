@@ -1,0 +1,50 @@
+[global]
+    # Wygląd
+    width = 300
+    height = 300
+    origin = top-right
+    offset = 10x50
+    scale = 0
+
+    # Pasek postępu (np. przy zmianie głośności)
+    progress_bar = true
+    progress_bar_height = 10
+    progress_bar_frame_width = 1
+    progress_bar_min_width = 150
+    progress_bar_max_width = 300
+
+    # Czcionka i ikony
+    font = JetBrains Mono 10
+    icon_position = left
+    max_icon_size = 64
+
+    # Zachowanie
+    history_length = 20
+    browser = /usr/bin/firefox -new-tab
+    sort = yes
+    
+    # Ramka
+    frame_width = 2
+    frame_color = "#e06c75"
+    separator_color = frame
+
+    # Odstępy
+    padding = 8
+    horizontal_padding = 8
+    text_icon_padding = 0
+
+[urgency_low]
+    background = "#1e1e1e"
+    foreground = "#888888"
+    timeout = 10
+
+[urgency_normal]
+    background = "#1e1e1e"
+    foreground = "#c5c8c6"
+    timeout = 10
+
+[urgency_critical]
+    background = "#1e1e1e"
+    foreground = "#e06c75"
+    frame_color = "#ff0000"
+    timeout = 0
