@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Hash poniżej służy do tego, aby chezmoi wiedziało, kiedy pakiety się zmieniły
+# packages: i3, polybar, rofi, kitty, dunst, picom, thunar, etc.
+
+echo "Rozpoczynam instalację pakietów dla środowiska i3wm..."
+
+sudo zypper refresh
+
+# 1. Rdzeń środowiska (Window Manager & Display)
+# i3-gaps: estetyczniejsza wersja i3 (w Tumbleweed często jako 'i3' z łatkami lub osobny pakiet)
+# polybar: pasek statusu (zastępuje panel KDE)
+# rofi: menu start/uruchamianie aplikacji (zastępuje KRunner/Menu Start)
+# picom: kompozytor (cienie, przezroczystość - odpowiednik KWin effects)
+# dunst: powiadomienia
+sudo zypper install -y i3 i3-gaps polybar rofi picom dunst
+
+# 2. Narzędzia systemowe (odpowiedniki ustawień systemowych KDE)
+# network-manager-applet: ikona sieci w trayu
+# blueman: zarządzanie bluetooth
+# pasystray / pavucontrol: zarządzanie dźwiękiem
+# brightnessctl: sterowanie jasnością ekranu (kluczowe dla laptopa)
+# feh: zarządzanie tapetą
+# arandr: zarządzanie układem monitorów (GUI dla xrandr)
+# autorandr: automatyczne wykrywanie profili monitorów (docking station vs mobile)
+sudo zypper install -y NetworkManager-applet blueman pavucontrol brightnessctl feh arandr autorandr
+
+# 3. Wygląd i aplikacje (Look & Feel)
+# lxappearance: ustawianie motywów GTK
+# thunar: menedżer plików (lekki, ale funkcjonalny jak Dolphin)
+# kitty: nowoczesny terminal (akcelerowany GPU - dobry dla Iris Xe)
+# polkit-gnome: okno autoryzacji (gdy aplikacja prosi o hasło roota)
+sudo zypper install -y lxappearance thunar kitty polkit-gnome
+
+# 4. Czcionki i ikony (dla estetyki)
+sudo zypper install -y fontawesome-fonts jetbrains-mono-fonts papirus-icon-theme
+
+# 5. Specyficzne dla ThinkPada T14 Gen 2 i openSUSE
+# tlp: zarządzanie energią (bateria)
+# intel-media-driver: akceleracja wideo dla Intel Iris Xe
+sudo zypper install -y tlp intel-media-driver
+
+echo "Instalacja pakietów zakończona."
