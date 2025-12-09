@@ -75,6 +75,12 @@ bindsym $mod+space focus mode_toggle
 # Blokowanie ekranu (Win + L)
 bindsym $mod+Escape exec ~/.local/bin/lock.sh
 
+# Uruchom graficzny edytor układu (Arandr)
+bindsym $mod+p exec arandr
+
+# Wymuś odświeżenie profilu autorandr (gdyby automat nie zadziałał)
+bindsym $mod+Shift+p exec "autorandr --change"
+
 # --- ThinkPad T14 Gen 2 Special Keys ---
 # Audio (wymaga zainstalowanego pavucontrol/pulseaudio-utils)
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5% && $refresh_i3status
