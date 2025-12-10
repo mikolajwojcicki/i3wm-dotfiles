@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "[-] Setting up Polkit rules for NetworkManager..."
+
+RULE_FILE="/etc/polkit-1/rules.d/50-networkmanager.rules"
+
+cat <<EOF | sudo tee "$RULE_FILE" > /dev/null
+/* Allow users in 'wheel' group to manage NetworkManager without password */
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 && subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
+
+sudo usermod -aG wheel $USER
+
+sudo systemctl restart polkit
+
+echo "[-] NetworkManager Polkit setup complete."
