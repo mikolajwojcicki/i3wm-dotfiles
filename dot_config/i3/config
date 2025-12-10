@@ -74,6 +74,8 @@ bindsym $mod+f fullscreen toggle
 bindsym $mod+e layout toggle split
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
+bindsym $mod+w layout tabbed
+bindsym $mods+s layout stacking
 
 # Blokowanie ekranu (Win + L)
 bindsym $mod+Escape exec ~/.local/bin/lock.sh
