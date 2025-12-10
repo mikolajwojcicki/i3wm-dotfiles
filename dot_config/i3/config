@@ -9,8 +9,8 @@ default_border pixel 2
 default_floating_border pixel 2
 
 # Odstępy między oknami (i3-gaps functionality)
-gaps inner 10
-gaps outer 5
+gaps inner 5
+gaps outer 2
 
 # --- Czcionki ---
 font pango:JetBrains Mono 10
@@ -34,6 +34,8 @@ exec --no-startup-id dunst
 exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/.local/bin/lock.sh
 # Bluetooth Applet (Tray icon)
 exec --no-startup-id blueman-applet
+# lxpolkit
+exec --no-startup-id /usr/bin/lxpolkit
 
 # --- Klawiatura i Układ ---
 # Dla VM używamy domyślnego.
