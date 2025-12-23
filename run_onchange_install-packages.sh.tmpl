@@ -52,6 +52,6 @@ sudo systemctl enable --now bluetooth
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf $tmp_dir' TERM
 curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" -o "${tmp_dir}/vscode.rpm"
-sudo zypper in --no-gpg-checks -y "${tmp_dir}/vscode.rpm"
+sudo zypper --no-gpg-checks in -y "${tmp_dir}/vscode.rpm"
 
 echo "Instalacja pakietów zakończona pomyślnie."
