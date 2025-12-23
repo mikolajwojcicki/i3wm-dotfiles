@@ -117,7 +117,7 @@ bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Wyjść z i3?' -B 'Tak' 'i3-
 # --- Power Profiles Management (Managed by chezmoi) ---
 set $mode_power Power Profiles: (p)erformance, (b)alanced, (s)aver
 
-bindsym $mod+Shift+p mode "$mode_power"
+bindsym $mod+Control+p mode "$mode_power"
 
 mode "$mode_power" {
     # Set to Performance
