@@ -1,57 +1,47 @@
-#!/bin/bash
-
-# Hash poniżej służy do tego, aby chezmoi wiedziało, kiedy pakiety się zmieniły
-# packages: i3, polybar, rofi, kitty, dunst, picom, thunar, etc. v2
+#!/usr/bin/env bash
 
 echo "Rozpoczynam instalację i naprawę zależności..."
 
 sudo zypper addrepo --refresh https://download.opensuse.org/repositories/home:/dmafanasyev/openSUSE_Tumbleweed/ dmafanasyev
+
 sudo zypper addrepo -C -f -n "X11:Utilities" https://download.opensuse.org/repositories/X11:Utilities/openSUSE_Tumbleweed/X11:Utilities.repo
 
 sudo zypper --gpg-auto-import-keys refresh
 
-# --- FIX 1: Konflikt Power Management ---
-# Jeśli tuned jest zainstalowany, usuwamy go, aby zrobić miejsce dla tlp (lepsze dla ThinkPada)
 if rpm -q tuned &> /dev/null; then
     echo "Wykryto konflikt: usuwanie 'tuned' na rzecz 'tlp'..."
     sudo zypper remove -y tuned
 fi
 
-# --- FIX 2: i3-gaps jest teraz w i3 ---
-# 1. Rdzeń środowiska
-# Usunięto 'i3-gaps', zostawiono samo 'i3' (funkcjonalność została scalona)
 sudo zypper install -y i3 polybar rofi picom dunst
 
-# 2. Narzędzia systemowe
 sudo zypper install -y NetworkManager-applet blueman pavucontrol brightnessctl feh arandr autorandr
 
-# 3. Wygląd i aplikacje
 sudo zypper install -y lxappearance thunar kitty polkit-gnome
 
-# 4. Czcionki i ikony
 sudo zypper install -y fontawesome-fonts jetbrains-mono-fonts papirus-icon-theme
 
-# 5. Specyficzne dla ThinkPada i openSUSE
-# sof-firmware: Wymagane dla Intel 11th Gen (Tiger Lake) Audio DSP
-# pipewire-pulseaudio: Kompatybilność PipeWire z aplikacjami PulseAudio (openSUSE name)
-# fprintd-pam: Obsługa czytnika linii papilarnych (openSUSE name)
 sudo zypper install -y tlp intel-media-driver sof-firmware alsa-firmware alsa-ucm-conf
+
 sudo zypper install -y pipewire pipewire-alsa pipewire-pulseaudio wireplumber alsa-utils
 
-# Dodajemy: i3lock (blokada), xss-lock (automat przy uśpieniu), scrot (screenshoty), imagemagick (rozmywanie tła)
 sudo zypper install -y i3lock xss-lock scrot ImageMagick
 
-# gtk theme
 sudo zypper install -y metatheme-arc-common gtk3-metatheme-arc gtk2-metatheme-arc
 
-# lxpolkit, howdy, fprintd
 sudo zypper install -y lxpolkit fprintd fprintd-pam howdy
 
-# --- Usługi Systemowe ---
-# Włączamy usługę autorandr, aby wykrywała podłączenie monitora (hotplug)
+sudo zypper install -y virt-manager libvirt distrobox patterns-server-kvm_server patterns-server-kvm_tools
+
+sudo zypper install -y btop aria2 opi upower flameshot discord NetworkManager-openconnect
+
 sudo systemctl enable --now autorandr.service
 
-# Włączamy usługę Bluetooth
 sudo systemctl enable --now bluetooth
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf $tmp_dir' TERM
+curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" -o "${tmp_dir}/vscode.rpm"
+sudo zypper in --no-gpg-checks -y "${tmp_dir}/vscode.rpm"
 
 echo "Instalacja pakietów zakończona pomyślnie."
