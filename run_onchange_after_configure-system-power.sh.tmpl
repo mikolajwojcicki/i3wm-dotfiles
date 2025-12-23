@@ -4,34 +4,43 @@ set -euo pipefail
 
 echo "Configuring System Power Settings..."
 
-# --- 1. Configure Battery Thresholds (Custom Service) ---
-# Since TLP conflicts with power-profiles-daemon, we create a simple
-# systemd service to set the charge thresholds via the kernel sysfs interface.
+# --- 1. Configure Power Settings (Battery + CPU) ---
+# We create a systemd service to:
+# 1. Set battery charge thresholds (Start 75% / Stop 80%)
+# 2. Force enable Intel Turbo Boost (Fix for 900MHz lock)
 
-BATTERY_SERVICE_FILE="/etc/systemd/system/battery-charge-thresholds.service"
-BATTERY_SERVICE_CONTENT="[Unit]
-Description=Set ThinkPad Battery Charge Thresholds
+POWER_SERVICE_FILE="/etc/systemd/system/thinkpad-power-config.service"
+POWER_SERVICE_CONTENT="[Unit]
+Description=Apply ThinkPad Power Settings (Battery & CPU)
 After=multi-user.target
 
 [Service]
 Type=oneshot
-# Check if BAT0 exists, then set thresholds. 
-# Start at 75%, Stop at 80%
-ExecStart=/bin/sh -c 'if [ -d /sys/class/power_supply/BAT0 ]; then echo 75 > /sys/class/power_supply/BAT0/charge_control_start_threshold; echo 80 > /sys/class/power_supply/BAT0/charge_control_end_threshold; fi'
+# The script does two things:
+# 1. Checks for BAT0 and sets thresholds.
+# 2. Checks for intel_pstate/no_turbo and sets it to 0 (Enable Turbo).
+ExecStart=/bin/sh -c 'if [ -d /sys/class/power_supply/BAT0 ]; then echo 75 > /sys/class/power_supply/BAT0/charge_control_start_threshold; echo 80 > /sys/class/power_supply/BAT0/charge_control_end_threshold; fi; if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo; fi'
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target"
 
-if [ ! -f "$BATTERY_SERVICE_FILE" ] || [ "$(cat "$BATTERY_SERVICE_FILE")" != "$BATTERY_SERVICE_CONTENT" ]; then
-    echo "Creating Battery Threshold Service..."
-    echo "$BATTERY_SERVICE_CONTENT" | sudo tee "$BATTERY_SERVICE_FILE" > /dev/null
+# Check if content changed or if we are renaming from the old service name
+if [ ! -f "$POWER_SERVICE_FILE" ] || [ "$(cat "$POWER_SERVICE_FILE")" != "$POWER_SERVICE_CONTENT" ]; then
+    echo "Creating/Updating Power Config Service..."
+    
+    # Clean up the old service name if it exists
+    if [ -f "/etc/systemd/system/battery-charge-thresholds.service" ]; then
+        echo "Removing old battery service..."
+        sudo systemctl disable --now battery-charge-thresholds.service || true
+        sudo rm /etc/systemd/system/battery-charge-thresholds.service
+    fi
+
+    echo "$POWER_SERVICE_CONTENT" | sudo tee "$POWER_SERVICE_FILE" > /dev/null
     sudo systemctl daemon-reload
 fi
 
 # --- 2. Configure Thermald (Adaptive Mode) ---
-# We need to override the systemd service to add the --adaptive flag
-
 THERMALD_OVERRIDE_DIR="/etc/systemd/system/thermald.service.d"
 THERMALD_OVERRIDE_FILE="$THERMALD_OVERRIDE_DIR/override.conf"
 THERMALD_CONTENT="[Service]
@@ -48,7 +57,7 @@ fi
 # --- 3. Enable and Start Services ---
 echo "Enabling and starting services..."
 sudo systemctl enable --now power-profiles-daemon
-sudo systemctl enable --now battery-charge-thresholds.service
+sudo systemctl enable --now thinkpad-power-config.service
 sudo systemctl restart thermald
 
 echo "Power management configuration complete."
