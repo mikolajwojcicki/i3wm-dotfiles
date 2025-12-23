@@ -1,4 +1,3 @@
-{{ if eq .chezmoi.osRelease.id "opensuse-tumbleweed" -}}
 #!/bin/bash
 set -euo pipefail
 
@@ -8,5 +7,3 @@ set -euo pipefail
 
 echo "Installing power management utilities..."
 sudo zypper install -y power-profiles-daemon thermald tlp
-
-{{ end -}}
