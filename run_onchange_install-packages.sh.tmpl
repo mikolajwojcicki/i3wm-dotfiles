@@ -6,7 +6,15 @@ sudo zypper addrepo --refresh https://download.opensuse.org/repositories/home:/d
 
 sudo zypper addrepo -C -f -n "X11:Utilities" https://download.opensuse.org/repositories/X11:Utilities/openSUSE_Tumbleweed/X11:Utilities.repo
 
+sudo zypper addrepo -cfp 90 'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/' packman
+
 sudo zypper --gpg-auto-import-keys refresh
+
+# --- Vendor Switch to Packman ---
+# This ensures we use the uncrippled versions of ffmpeg/mesa
+echo "Performing vendor switch to Packman for codecs..."
+sudo zypper dist-upgrade -y --from packman --allow-vendor-change
+
 
 if rpm -q tuned &> /dev/null; then
     echo "Wykryto konflikt: usuwanie 'tuned' na rzecz 'tlp'..."
@@ -21,9 +29,11 @@ sudo zypper install -y lxappearance thunar kitty polkit-gnome
 
 sudo zypper install -y fontawesome-fonts jetbrains-mono-fonts papirus-icon-theme
 
-sudo zypper install -y tlp intel-media-driver sof-firmware alsa-firmware alsa-ucm-conf
+sudo zypper install -y tlp intel-media-driver sof-firmware alsa-firmware alsa-ucm-conf intel-gpu-tools
 
+# Audio & Multimedia (Updated with Packman codecs)
 sudo zypper install -y pipewire pipewire-alsa pipewire-pulseaudio wireplumber alsa-utils
+sudo zypper install -y --from packman ffmpeg gstreamer-plugins-bad gstreamer-plugins-libav gstreamer-plugins-ugly libavcodec-full vlc-codecs
 
 sudo zypper install -y i3lock xss-lock scrot ImageMagick
 
@@ -43,7 +53,5 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf $tmp_dir' TERM
 curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" -o "${tmp_dir}/vscode.rpm"
 sudo zypper in --no-gpg-checks -y "${tmp_dir}/vscode.rpm"
-
-sudo zypper install -y tlp intel-media-driver sof-firmware alsa-firmware alsa-ucm-conf intel-gpu-tools
 
 echo "Instalacja pakietów zakończona pomyślnie."
