@@ -44,4 +44,6 @@ trap 'rm -rf $tmp_dir' TERM
 curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=linux-rpm-x64" -o "${tmp_dir}/vscode.rpm"
 sudo zypper in --no-gpg-checks -y "${tmp_dir}/vscode.rpm"
 
+sudo zypper install -y tlp intel-media-driver sof-firmware alsa-firmware alsa-ucm-conf intel-gpu-tools
+
 echo "Instalacja pakietów zakończona pomyślnie."

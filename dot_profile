@@ -1,0 +1,11 @@
+# Force Intel Media Driver (iHD) for VA-API
+# Your vainfo output confirmed the path is /usr/lib64/dri/iHD_drv_video.so
+export LIBVA_DRIVER_NAME=iHD
+export LIBVA_DRIVERS_PATH=/usr/lib64/dri
+
+# Firefox specific settings to force Hardware Acceleration
+export MOZ_DISABLE_RDD_SANDBOX=1
+export MOZ_X11_EGL=1
+
+# General backend settings
+export EGL_PLATFORM=x11
