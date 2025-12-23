@@ -1,28 +1,32 @@
+{{ if eq .chezmoi.osRelease.id "opensuse-tumbleweed" -}}
 #!/bin/bash
 set -euo pipefail
 
 echo "Configuring System Power Settings..."
 
-# --- 1. Configure TLP (Battery Health Only) ---
-# We use a drop-in file in /etc/tlp.d/ instead of editing /etc/tlp.conf directly.
-# This persists better across package updates.
+# --- 1. Configure Battery Thresholds (Custom Service) ---
+# Since TLP conflicts with power-profiles-daemon, we create a simple
+# systemd service to set the charge thresholds via the kernel sysfs interface.
 
-TLP_CONF="/etc/tlp.d/00-thinkpad-battery.conf"
-TLP_CONTENT="# Managed by chezmoi
-# Battery Charge Thresholds for ThinkPad T14 Gen 2
-START_CHARGE_THRESH_BAT0=75
-STOP_CHARGE_THRESH_BAT0=80
+BATTERY_SERVICE_FILE="/etc/systemd/system/battery-charge-thresholds.service"
+BATTERY_SERVICE_CONTENT="[Unit]
+Description=Set ThinkPad Battery Charge Thresholds
+After=multi-user.target
 
-# Explicitly disable CPU/Platform management to avoid conflict with power-profiles-daemon
-CPU_SCALING_GOVERNOR_ON_AC=
-CPU_ENERGY_PERF_POLICY_ON_AC=
-PLATFORM_PROFILE_ON_AC=
-"
+[Service]
+Type=oneshot
+# Check if BAT0 exists, then set thresholds. 
+# Start at 75%, Stop at 80%
+ExecStart=/bin/sh -c 'if [ -d /sys/class/power_supply/BAT0 ]; then echo 75 > /sys/class/power_supply/BAT0/charge_control_start_threshold; echo 80 > /sys/class/power_supply/BAT0/charge_control_end_threshold; fi'
+RemainAfterExit=yes
 
-# Only write if content differs to avoid unnecessary sudo prompts/restarts
-if [ ! -f "$TLP_CONF" ] || [ "$(cat "$TLP_CONF")" != "$TLP_CONTENT" ]; then
-    echo "Writing TLP configuration..."
-    echo "$TLP_CONTENT" | sudo tee "$TLP_CONF" > /dev/null
+[Install]
+WantedBy=multi-user.target"
+
+if [ ! -f "$BATTERY_SERVICE_FILE" ] || [ "$(cat "$BATTERY_SERVICE_FILE")" != "$BATTERY_SERVICE_CONTENT" ]; then
+    echo "Creating Battery Threshold Service..."
+    echo "$BATTERY_SERVICE_CONTENT" | sudo tee "$BATTERY_SERVICE_FILE" > /dev/null
+    sudo systemctl daemon-reload
 fi
 
 # --- 2. Configure Thermald (Adaptive Mode) ---
@@ -44,7 +48,8 @@ fi
 # --- 3. Enable and Start Services ---
 echo "Enabling and starting services..."
 sudo systemctl enable --now power-profiles-daemon
-sudo systemctl enable --now tlp
-sudo systemctl restart thermald # Restart to pick up override
+sudo systemctl enable --now battery-charge-thresholds.service
+sudo systemctl restart thermald
 
 echo "Power management configuration complete."
+{{ end -}}
