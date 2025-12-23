@@ -113,3 +113,23 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl set 5%-
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Wyjść z i3?' -B 'Tak' 'i3-msg exit'"
+
+# --- Power Profiles Management (Managed by chezmoi) ---
+set $mode_power Power Profiles: (p)erformance, (b)alanced, (s)aver
+
+bindsym $mod+Shift+p mode "$mode_power"
+
+mode "$mode_power" {
+    # Set to Performance
+    bindsym p exec --no-startup-id powerprofilesctl set performance, mode "default"
+    
+    # Set to Balanced
+    bindsym b exec --no-startup-id powerprofilesctl set balanced, mode "default"
+    
+    # Set to Power Saver (Maps to hardware 'low-power')
+    bindsym s exec --no-startup-id powerprofilesctl set power-saver, mode "default"
+
+    # Exit without changing settings
+    bindsym Escape mode "default"
+    bindsym Return mode "default"
+}

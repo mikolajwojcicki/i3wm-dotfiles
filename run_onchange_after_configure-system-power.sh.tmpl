@@ -1,0 +1,52 @@
+{{ if eq .chezmoi.osRelease.id "opensuse-tumbleweed" -}}
+#!/bin/bash
+set -euo pipefail
+
+echo "Configuring System Power Settings..."
+
+# --- 1. Configure TLP (Battery Health Only) ---
+# We use a drop-in file in /etc/tlp.d/ instead of editing /etc/tlp.conf directly.
+# This persists better across package updates.
+
+TLP_CONF="/etc/tlp.d/00-thinkpad-battery.conf"
+TLP_CONTENT="# Managed by chezmoi
+# Battery Charge Thresholds for ThinkPad T14 Gen 2
+START_CHARGE_THRESH_BAT0=75
+STOP_CHARGE_THRESH_BAT0=80
+
+# Explicitly disable CPU/Platform management to avoid conflict with power-profiles-daemon
+CPU_SCALING_GOVERNOR_ON_AC=
+CPU_ENERGY_PERF_POLICY_ON_AC=
+PLATFORM_PROFILE_ON_AC=
+"
+
+# Only write if content differs to avoid unnecessary sudo prompts/restarts
+if [ ! -f "$TLP_CONF" ] || [ "$(cat "$TLP_CONF")" != "$TLP_CONTENT" ]; then
+    echo "Writing TLP configuration..."
+    echo "$TLP_CONTENT" | sudo tee "$TLP_CONF" > /dev/null
+fi
+
+# --- 2. Configure Thermald (Adaptive Mode) ---
+# We need to override the systemd service to add the --adaptive flag
+
+THERMALD_OVERRIDE_DIR="/etc/systemd/system/thermald.service.d"
+THERMALD_OVERRIDE_FILE="$THERMALD_OVERRIDE_DIR/override.conf"
+THERMALD_CONTENT="[Service]
+ExecStart=
+ExecStart=/usr/sbin/thermald --systemd --adaptive --ignore-cpuid-check"
+
+if [ ! -f "$THERMALD_OVERRIDE_FILE" ]; then
+    echo "Configuring Thermald Adaptive Mode..."
+    sudo mkdir -p "$THERMALD_OVERRIDE_DIR"
+    echo "$THERMALD_CONTENT" | sudo tee "$THERMALD_OVERRIDE_FILE" > /dev/null
+    sudo systemctl daemon-reload
+fi
+
+# --- 3. Enable and Start Services ---
+echo "Enabling and starting services..."
+sudo systemctl enable --now power-profiles-daemon
+sudo systemctl enable --now tlp
+sudo systemctl restart thermald # Restart to pick up override
+
+echo "Power management configuration complete."
+{{ end -}}
