@@ -4,43 +4,71 @@ set -euo pipefail
 
 echo "Configuring System Power Settings..."
 
-# --- 1. Configure Power Settings (Battery + CPU) ---
-# We create a systemd service to:
-# 1. Set battery charge thresholds (Start 75% / Stop 80%)
-# 2. Force enable Intel Turbo Boost (Fix for 900MHz lock)
+# --- 1. Create the Power Configuration Script ---
+# We write a dedicated script to /usr/local/bin for better debugging and reliability.
 
-POWER_SERVICE_FILE="/etc/systemd/system/thinkpad-power-config.service"
-POWER_SERVICE_CONTENT="[Unit]
+SCRIPT_FILE="/usr/local/bin/tp-power-config.sh"
+SCRIPT_CONTENT='#!/bin/bash
+# Managed by chezmoi
+# This script forces power settings that might be reset by the BIOS or OS defaults.
+
+echo "--- Starting ThinkPad Power Config ---"
+
+# 1. Force Enable Intel Turbo Boost
+# The i5-1135G7 sometimes gets stuck at base clock (900MHz-2.4GHz) if this is set to 1.
+TURBO_FILE="/sys/devices/system/cpu/intel_pstate/no_turbo"
+if [ -f "$TURBO_FILE" ]; then
+    echo "Found Turbo switch. Setting to 0 (Enabled)..."
+    echo 0 > "$TURBO_FILE" || echo "Error: Failed to enable Turbo."
+else
+    echo "Warning: Turbo switch ($TURBO_FILE) not found."
+fi
+
+# 2. Set Battery Charge Thresholds (ThinkPad Specific)
+# Start charging at 75%, Stop at 80% to preserve battery health.
+BAT_DIR="/sys/class/power_supply/BAT0"
+if [ -d "$BAT_DIR" ]; then
+    echo "Found BAT0. Setting thresholds..."
+    # We set End threshold first to avoid conflicts if Start > current End
+    echo 80 > "$BAT_DIR/charge_control_end_threshold" || echo "Error: Failed to set end threshold."
+    echo 75 > "$BAT_DIR/charge_control_start_threshold" || echo "Error: Failed to set start threshold."
+else
+    echo "Warning: Battery BAT0 not found."
+fi
+
+echo "--- Configuration Complete ---"
+'
+
+# Write the script and make it executable
+if [ ! -f "$SCRIPT_FILE" ] || [ "$(cat "$SCRIPT_FILE")" != "$SCRIPT_CONTENT" ]; then
+    echo "Installing power config script to $SCRIPT_FILE..."
+    echo "$SCRIPT_CONTENT" | sudo tee "$SCRIPT_FILE" > /dev/null
+    sudo chmod +x "$SCRIPT_FILE"
+fi
+
+# --- 2. Create the Systemd Service ---
+# This service runs the script above at boot.
+
+SERVICE_FILE="/etc/systemd/system/thinkpad-power-config.service"
+SERVICE_CONTENT="[Unit]
 Description=Apply ThinkPad Power Settings (Battery & CPU)
 After=multi-user.target
 
 [Service]
 Type=oneshot
-# The script does two things:
-# 1. Checks for BAT0 and sets thresholds.
-# 2. Checks for intel_pstate/no_turbo and sets it to 0 (Enable Turbo).
-ExecStart=/bin/sh -c 'if [ -d /sys/class/power_supply/BAT0 ]; then echo 75 > /sys/class/power_supply/BAT0/charge_control_start_threshold; echo 80 > /sys/class/power_supply/BAT0/charge_control_end_threshold; fi; if [ -f /sys/devices/system/cpu/intel_pstate/no_turbo ]; then echo 0 > /sys/devices/system/cpu/intel_pstate/no_turbo; fi'
+ExecStart=$SCRIPT_FILE
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target"
 
-# Check if content changed or if we are renaming from the old service name
-if [ ! -f "$POWER_SERVICE_FILE" ] || [ "$(cat "$POWER_SERVICE_FILE")" != "$POWER_SERVICE_CONTENT" ]; then
-    echo "Creating/Updating Power Config Service..."
-    
-    # Clean up the old service name if it exists
-    if [ -f "/etc/systemd/system/battery-charge-thresholds.service" ]; then
-        echo "Removing old battery service..."
-        sudo systemctl disable --now battery-charge-thresholds.service || true
-        sudo rm /etc/systemd/system/battery-charge-thresholds.service
-    fi
-
-    echo "$POWER_SERVICE_CONTENT" | sudo tee "$POWER_SERVICE_FILE" > /dev/null
+if [ ! -f "$SERVICE_FILE" ] || [ "$(cat "$SERVICE_FILE")" != "$SERVICE_CONTENT" ]; then
+    echo "Updating Power Config Service..."
+    echo "$SERVICE_CONTENT" | sudo tee "$SERVICE_FILE" > /dev/null
     sudo systemctl daemon-reload
 fi
 
-# --- 2. Configure Thermald (Adaptive Mode) ---
+# --- 3. Configure Thermald (Adaptive Mode) ---
 THERMALD_OVERRIDE_DIR="/etc/systemd/system/thermald.service.d"
 THERMALD_OVERRIDE_FILE="$THERMALD_OVERRIDE_DIR/override.conf"
 THERMALD_CONTENT="[Service]
@@ -54,7 +82,7 @@ if [ ! -f "$THERMALD_OVERRIDE_FILE" ]; then
     sudo systemctl daemon-reload
 fi
 
-# --- 3. Enable and Start Services ---
+# --- 4. Enable and Start Services ---
 echo "Enabling and starting services..."
 sudo systemctl enable --now power-profiles-daemon
 sudo systemctl enable --now thinkpad-power-config.service
