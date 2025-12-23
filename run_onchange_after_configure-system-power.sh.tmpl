@@ -69,18 +69,21 @@ if [ ! -f "$SERVICE_FILE" ] || [ "$(cat "$SERVICE_FILE")" != "$SERVICE_CONTENT" 
 fi
 
 # --- 3. Configure Thermald (Adaptive Mode) ---
+# Fix for Timeout: We set Type=simple so systemd doesn't wait for a dbus signal.
+# We also use standard flags (--no-daemon) instead of --systemd to avoid conflicts.
+
 THERMALD_OVERRIDE_DIR="/etc/systemd/system/thermald.service.d"
 THERMALD_OVERRIDE_FILE="$THERMALD_OVERRIDE_DIR/override.conf"
 THERMALD_CONTENT="[Service]
+Type=simple
 ExecStart=
-ExecStart=/usr/sbin/thermald --systemd --adaptive --ignore-cpuid-check"
+ExecStart=/usr/sbin/thermald --no-daemon --dbus-enable --adaptive --ignore-cpuid-check"
 
-if [ ! -f "$THERMALD_OVERRIDE_FILE" ]; then
-    echo "Configuring Thermald Adaptive Mode..."
-    sudo mkdir -p "$THERMALD_OVERRIDE_DIR"
-    echo "$THERMALD_CONTENT" | sudo tee "$THERMALD_OVERRIDE_FILE" > /dev/null
-    sudo systemctl daemon-reload
-fi
+# Always write this file to ensure the Type=simple fix is applied
+echo "Configuring Thermald Adaptive Mode (Fixing Timeouts)..."
+sudo mkdir -p "$THERMALD_OVERRIDE_DIR"
+echo "$THERMALD_CONTENT" | sudo tee "$THERMALD_OVERRIDE_FILE" > /dev/null
+sudo systemctl daemon-reload
 
 # --- 4. Enable and Start Services ---
 echo "Enabling and starting services..."
